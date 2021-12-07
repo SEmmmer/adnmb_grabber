@@ -3,7 +3,7 @@ plugins {
   `java-library`
 }
 
-group = "org.example"
+group = "com.emmmer.adnmb"
 version = "1.0-SNAPSHOT"
 
 dependencies {
@@ -12,9 +12,6 @@ dependencies {
   implementation("org.jsoup:jsoup:1.14.3")
   implementation("com.google.code.gson:gson:2.8.9")
   implementation("org.glavo", "kala-common", version = "0.30.0")
-  implementation("org.aya-prover", "base", version = "0.12")
-  implementation("org.aya-prover", "cli", version = "0.12")
-  implementation("org.aya-prover", "pretty", version = "0.12")
 }
 
 allprojects {
@@ -35,9 +32,9 @@ allprojects {
     if (hasProperty("release")) withJavadocJar()
     sourceCompatibility = JavaVersion.VERSION_17
     targetCompatibility = JavaVersion.VERSION_17
-//    toolchain {
-//      languageVersion.set(JavaLanguageVersion.of(17))
-//    }
+    toolchain {
+      languageVersion.set(JavaLanguageVersion.of(17))
+    }
   }
 
   tasks.withType<JavaCompile>().configureEach {
@@ -46,15 +43,11 @@ allprojects {
     options.apply {
       encoding = "UTF-8"
       isDeprecation = true
-//      release.set(17)
+      release.set(17)
       compilerArgs.addAll(
         listOf(
           "-Xlint:unchecked",
           "--enable-preview",
-          "--add-exports", "jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED",
-          "--add-exports", "jdk.compiler/com.sun.tools.javac.main=ALL-UNNAMED",
-          "--add-exports", "jdk.compiler/com.sun.tools.javac.comp=ALL-UNNAMED",
-          "--add-exports", "jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED",
         ),
       )
     }
