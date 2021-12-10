@@ -1,5 +1,6 @@
 package com.emmmer.adnmb;
 
+import com.google.gson.Gson;
 import kala.collection.immutable.ImmutableSeq;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -11,6 +12,9 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.List;
 import java.util.Objects;
 import java.util.stream.IntStream;
 import java.util.zip.GZIPInputStream;
@@ -22,21 +26,33 @@ public class Main {
     String no,
     String content
   ) {
-
+    @Override public String toString() {
+      return """
+        ==============================
+        %s\t%s\t%s
+        %s
+        ==============================
+        """.formatted(time, po, no, content);
+    }
   }
 
   record Thread(
     Content content,
-    ImmutableSeq<Content> reply
+    List<Content> reply
   ) {
+    @Override public String toString() {
+      return ImmutableSeq.from(reply).prepended(content).joinToString("\n");
+    }
   }
 
   static HttpClient CLIENT = HttpClient.newBuilder().version(HttpClient.Version.HTTP_2).build();
 
   public static void main(String[] args) throws IOException, InterruptedException {
-    var thread = getThread("https://adnmb3.com/t/45144493");
-    System.out.println(thread);
-
+    var str = "45141418";
+    var thread = getThread("https://adnmb3.com/t/" + str);
+    var json = new Gson().toJson(thread);
+    Files.writeString(Path.of("/Users/emmmer/Downloads", str + ".txt"), thread.toString());
+    Files.writeString(Path.of("/Users/emmmer/Downloads", str + ".json"), json);
   }
 
   private static Document getDoc(String url) throws IOException, InterruptedException {
@@ -52,19 +68,19 @@ public class Main {
   private static Thread getThread(String url) throws IOException, InterruptedException {
     var doc = getDoc(url);
     var thread = doc.select(".h-threads-list").select(".h-threads-item-main");
-
     var pages = doc.select("ul.uk-pagination > li > a");
-    int lastPage = 83;
-    var s = IntStream.range(0, lastPage + 1).boxed()
+    var lastPage = pages.stream().map(i -> i.attr("href").split("page=")[1]).collect(ImmutableSeq.factory()).map(Integer::parseInt).max();
+    var replies = IntStream.range(1, lastPage + 1).boxed()
       .collect(ImmutableSeq.factory())
       .flatMap(page -> getReplyInUrl(url, page));
-    var x = getContent(Objects.requireNonNull(thread.first()));
-    return new Thread(x, s);
+    var main = getContent(Objects.requireNonNull(thread.first()));
+    return new Thread(main, replies.asJava());
   }
 
   private static ImmutableSeq<Content> getReplyInUrl(String baseUrl, int page) {
     try {
-      var doc = getDoc(baseUrl + "?page" + page);
+      java.lang.Thread.sleep(1000);
+      var doc = getDoc(baseUrl + "?page=" + page);
       return getReply(doc);
     } catch (IOException | InterruptedException e) {
       throw new RuntimeException("Cannot get reply in page: " + page, e);
@@ -83,7 +99,10 @@ public class Main {
     var time = thread.select(".h-threads-info-createdat").text();
     var po = thread.select(".h-threads-info-uid").text().replace("ID:", "");
     var no = thread.select(".h-threads-info-id").text().replace("No.", "");
-    var content = ImmutableSeq.from(thread.select(".h-threads-content").html().split("<br>")).joinToString("");
+    var content = ImmutableSeq.from(thread.select(".h-threads-content").html().split("<br>"))
+      .map(i -> i.replace("<font color=\"#789922\">", "").replace("</font>", ""))
+      .map(i -> i.replaceAll("&gt;", ">"))
+      .joinToString("");
     return new Content(time, po, no, content);
   }
 }
