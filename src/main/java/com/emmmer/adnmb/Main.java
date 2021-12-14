@@ -14,6 +14,8 @@ import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.sql.Time;
+import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.IntStream;
@@ -51,14 +53,17 @@ public class Main {
     var str = "45141418";
     var thread = getThread("https://adnmb3.com/t/" + str);
     var json = new Gson().toJson(thread);
-    Files.writeString(Path.of("/Users/emmmer/Downloads", str + ".txt"), thread.toString());
-    Files.writeString(Path.of("/Users/emmmer/Downloads", str + ".json"), json);
+    var dir = Time.from(Instant.now()).toString();
+    Files.createDirectory(Path.of("/Users/emmmer/Downloads/" + dir));
+    Files.writeString(Path.of("/Users/emmmer/Downloads" + dir, str + ".txt"), thread.toString());
+    Files.writeString(Path.of("/Users/emmmer/Downloads" + dir, str + ".json"), json);
   }
 
   private static Document getDoc(String url) throws IOException, InterruptedException {
     var body = CLIENT.send(HttpRequest.newBuilder(URI.create(url))
       .GET()
       .header("content-type", "application/gzip")
+
       .build(), HttpResponse.BodyHandlers.ofInputStream()).body();
     var gzipIn = new GZIPInputStream(body);
     var text = new String(gzipIn.readAllBytes(), StandardCharsets.UTF_8);
@@ -81,6 +86,8 @@ public class Main {
     try {
       java.lang.Thread.sleep(1000);
       var doc = getDoc(baseUrl + "?page=" + page);
+      var date = Time.from(Instant.now()).toString();
+      System.out.printf("[%s]Get page %s \n", date, page);
       return getReply(doc);
     } catch (IOException | InterruptedException e) {
       throw new RuntimeException("Cannot get reply in page: " + page, e);
