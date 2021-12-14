@@ -63,7 +63,7 @@ public class Main {
     var body = CLIENT.send(HttpRequest.newBuilder(URI.create(url))
       .GET()
       .header("content-type", "application/gzip")
-
+      .header("cookie", "userhash=")
       .build(), HttpResponse.BodyHandlers.ofInputStream()).body();
     var gzipIn = new GZIPInputStream(body);
     var text = new String(gzipIn.readAllBytes(), StandardCharsets.UTF_8);
