@@ -54,16 +54,16 @@ public class Main {
     var thread = getThread("https://adnmb3.com/t/" + str);
     var json = new Gson().toJson(thread);
     var dir = Time.from(Instant.now()).toString();
-    Files.createDirectory(Path.of("/Users/emmmer/Downloads/" + dir));
-    Files.writeString(Path.of("/Users/emmmer/Downloads" + dir, str + ".txt"), thread.toString());
-    Files.writeString(Path.of("/Users/emmmer/Downloads" + dir, str + ".json"), json);
+    Files.createDirectories(Path.of("/Users/emmmer/Downloads/", dir));
+    Files.writeString(Path.of("/Users/emmmer/Downloads", dir, str + ".txt"), thread.toString());
+    Files.writeString(Path.of("/Users/emmmer/Downloads", dir, str + ".json"), json);
   }
 
   private static Document getDoc(String url) throws IOException, InterruptedException {
     var body = CLIENT.send(HttpRequest.newBuilder(URI.create(url))
       .GET()
       .header("content-type", "application/gzip")
-      .header("cookie", "userhash=")
+      .header("cookie", System.getenv("cookie"))
       .build(), HttpResponse.BodyHandlers.ofInputStream()).body();
     var gzipIn = new GZIPInputStream(body);
     var text = new String(gzipIn.readAllBytes(), StandardCharsets.UTF_8);
